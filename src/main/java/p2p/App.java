@@ -20,10 +20,15 @@ public class App {
                     )
             );
 
-            System.out.println("Press enter to stop the server");
-            System.in.read(); // server should stop if someone presses enter.
-            System.out.println("Stopping server...");
-            fileController.stop();
+             if (System.console() != null) {
+                System.out.println("Press enter to stop the server");
+                System.in.read();
+                System.out.println("Stopping server...");
+                fileController.stop();
+            } else {
+                // Keep server alive in cloud
+                Thread.currentThread().join();
+            }
         }catch (Exception e){
             System.err.println("Failed to start the server at port 8080");
             e.printStackTrace();
