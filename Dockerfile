@@ -1,32 +1,29 @@
 ############## STAGE 1: BUILD ##############
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 
-# Set the working directory inside container
 WORKDIR /app
 
-# Copy only pom.xml first (layer caching)
+# Copy Maven files first (better caching)
 COPY pom.xml .
 
-# Download dependencies
-RUN mvn -q dependency:go-offline
+# Fetch dependencies (much faster than go-offline)
+RUN mvn -q dependency:resolve
+RUN mvn -q dependency:resolve-plugins
 
-# Copy full project
+# Copy source code
 COPY src ./src
 
-# Build the JAR (skip tests for faster build)
+# Build the JAR
 RUN mvn -q clean package -DskipTests
 
 
-############## STAGE 2: RUN ##############
+############## STAGE 2: RUNTIME ##############
 FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
-# Copy jar from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose backend port
 EXPOSE 8080
 
-# Start the Java application
 ENTRYPOINT ["java", "-jar", "app.jar"]
